@@ -1,3 +1,5 @@
+#Przed odpaleniem streamlit run S_Dashboard.py --server.port 8080
+
 import streamlit as st 
 import numpy as np
 import pandas as pd
