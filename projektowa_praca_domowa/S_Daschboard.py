@@ -8,6 +8,7 @@ import plotly.figure_factory as ff
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go   
+import statsmodels.formula.api as smf
 
 df1 = pd.read_csv('messy_data.csv', sep=',')
 df2 = pd.read_csv('messy_data.csv', sep=', ')
@@ -21,7 +22,18 @@ df_before_Standarization = pd.read_csv('df_before_Standarization.csv')
 df = pd.read_csv('df.csv')
 df_mini = pd.read_csv('df_mini.csv')
 
+def plot_scatter_and_line(x, scatter_y, line_y, scatter_name, line_name, title, x_title, y_title):
 
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=x, y=scatter_y, name=scatter_name, mode="markers"))
+    fig.add_trace(go.Scatter(
+        x=x, y=line_y, name=line_name))
+    fig.update_layout(title=title, xaxis_title=x_title,
+        yaxis_title=y_title)
+    
+    return fig
 
 selected = option_menu(
     menu_title='Menu główne',
@@ -31,9 +43,6 @@ selected = option_menu(
     default_index=0,
     orientation='horizontal'
 )
-
-################################ Dane #########################################
-
 
 
 if selected == 'Dane':
@@ -200,11 +209,45 @@ elif selected == 'Ewaluacja modelu':
                         options = ['Wykres Rezyduów - dowolna liczba zmiennych objaśniających',
                                    "Wykres dopasowania lini regresji - maksymalnie jedna zmienna objaśniająca"])
     if Selected2 == 'Wykres Rezyduów - dowolna liczba zmiennych objaśniających':
-        st.write('TODO')
+        zmienne = df_mini.columns.tolist()
+        zmienne.remove('price')
+        zmienne = zmienne[0:15]
+        my_formula = "price~1"
+        st.write("Wybierz zmienne których chcesz użyć do budowania modelu regresji")
+        for zmienna in zmienne:
+            check = st.checkbox(label=f"{zmienna}", value=False)
+            if check == True:
+                my_formula += f"+ {zmienna}"
+        chosen_model =  smf.ols(formula=my_formula, data=df_mini).fit()
+        df_mini["residuals"] = chosen_model.resid
+        line_y = [0] * len(df_mini["price"])
+        fig = plot_scatter_and_line(df_mini["price"], df_mini["residuals"], line_y, "Model residuals", "y=0", "Model Residual Plot of z dimension vs price", "Price", "Residuals")
+        if st.button('Narysuj wykres'):
+            fig.show()    
+        
+        
         
     elif Selected2 == "Wykres dopasowania lini regresji - maksymalnie jedna zmienna objaśniająca":
-        st.write("TODO")
-    
+        zmienne = df_mini.columns.tolist()
+        zmienne.remove('price')
+        zmienne = zmienne[0:9]
+        fig = go.Figure()
+        for zmienna in zmienne:
+            my_formula = "price~" +zmienna
+            quick_model =  smf.ols(formula=my_formula, data=df_mini).fit()
+
+            df_mini["fitted"] = quick_model.fittedvalues
+
+            
+            fig.add_trace(go.Scatter(
+                x=df_mini[zmienna], y=df_mini["price"], name=f"Price vs {zmienna}", mode="markers"))
+            fig.add_trace(go.Scatter(
+                x=df_mini[zmienna], y=df_mini["fitted"], name=f"Fitted Regression Line for {zmienna}"))
+        fig.update_layout(title="Regression line of price vs standarized one of the dimensions", xaxis_title="zmiennie objaśniające",
+                yaxis_title="Price")
+        st.write("Narysuje to duży wykres, z którego można wybrać swoje zmienne")
+        if st.button('Narysuj wykres'):
+            fig.show()    
     
     
     
