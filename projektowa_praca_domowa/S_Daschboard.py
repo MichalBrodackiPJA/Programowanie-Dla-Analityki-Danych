@@ -217,13 +217,15 @@ elif selected == 'Ewaluacja modelu':
         my_formula = "price~1"
         st.write("Wybierz zmienne których chcesz użyć do budowania modelu regresji")
         for zmienna in zmienne:
-            check = st.checkbox(label=f"{zmienna}", value=False)
-            if check == True:
-                my_formula += f"+ {zmienna}"
+            with st.sidebar:
+                check = st.checkbox(label=f"{zmienna}", value=False)
+                if check == True:
+                    my_formula += f"+ {zmienna}"
         chosen_model =  smf.ols(formula=my_formula, data=df_mini).fit()
         df_mini["residuals"] = chosen_model.resid
         line_y = [0] * len(df_mini["price"])
         fig = plot_scatter_and_line(df_mini["price"], df_mini["residuals"], line_y, "Model residuals", "y=0", "Model Residual Plot of z dimension vs price", "Price", "Residuals")
+        st.write(chosen_model.summary())
         if st.button('Narysuj wykres'):
             fig.show()    
         
